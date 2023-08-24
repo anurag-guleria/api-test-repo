@@ -1,0 +1,58 @@
+name: Databricks CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy_views:
+    runs-on: ubuntu-latest
+    
+    env:
+      DATABRICKS_HOSTNAME: "host_name"
+      DATABRICKS_HTTP_PATH: "http_path"
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+
+    - name: Install Databricks SQL CLI
+      run: |
+        pip install databricks-sql-cli
+
+    - name: Determine changed SQL files
+      id: changed_files
+      run: |
+        changed_files=$(git diff --name-status ${{ github.event.before }} ${{ github.sha }} | awk '$2 ~ /\.sql$/ {print $1, $2}' || true)
+        echo "::set-output name=changed_files::$changed_files"
+        
+    # - name: Process changed SQL files
+    #   run: |
+    #     for change in ${{ steps.changed_files.outputs.changed_files }}; do
+    #       action=$(echo $change | awk '{print $1}')
+    #       file=${change#*/}
+    #       view_name=$(grep -oP '(?<=CREATE OR REPLACE VIEW )\w+' $file)
+    #       echo "Processing view: $view_name (Action: $action)"
+          
+    #       if [[ $action == "M" ]]; then
+    #         sql_content=$(cat $file)
+            
+    #         dbsqlcli -e "$sql_content" --hostname "$DATABRICKS_HOSTNAME" --http-path "$DATABRICKS_HTTP_PATH" --access-token "$DATABRICKS_TOKEN"
+    #       elif [[ $action == "D" ]]; then
+    #         # DROP VIEW SQL statement
+    #         drop_sql="DROP VIEW IF EXISTS $view_name"
+            
+    #         expect_script="spawn dbsqlcli -e \"$drop_sql\" --hostname \"$DATABRICKS_HOSTNAME\" --http-path \"$DATABRICKS_HTTP_PATH\" --access-token \"$DATABRICKS_TOKEN\"\n"
+    #         expect_script+="expect \"Do you want to proceed? (y/n):\"\n"
+    #         expect_script+="send \"y\\r\"\n"
+    #         expect_script+="interact"
+            
+    #         echo -e "$expect_script" | expect -
+    #       fi
+    #     done
