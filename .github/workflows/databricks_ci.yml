@@ -29,8 +29,10 @@ jobs:
     - name: Determine changed SQL files
       id: changed_files
       run: |
-        changed_files=$(git diff --name-status [SHA1 [SHA2]] | awk '$2 ~ /\.sql$/ {print $1, $2}' || true)
-        echo "::save-state name=changed_files::$changed_files"
+        changed_files=$(git diff --name-only ${{ github.sha }}^..${{ github.sha }} | grep '\.sql$' || true)
+        echo "name=changed_files::$changed_files" $GITHUB_OUTPUT
+
+        echo $name
         
     # - name: Process changed SQL files
     #   run: |
