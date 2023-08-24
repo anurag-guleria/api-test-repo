@@ -29,6 +29,7 @@ jobs:
     - name: Determine changed SQL files
       id: changed_files
       run: |
+
         changed_files=$(git diff --name-status ${{ github.event.before }}..${{ github.sha }} | awk '$2 ~ /\.sql$/ {print $1, $2}' || true)
         echo "::set-output name=changed_files::$changed_files"
         
